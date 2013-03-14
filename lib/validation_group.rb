@@ -31,7 +31,7 @@ module ValidationGroup
 
         unless included_modules.include?(InstanceMethods)
           # jeffp: added reader for current_validation_fields
-          attr_reader :current_validation_group, :current_validation_fields
+          attr_reader :current_validation_groups, :current_validation_fields
           include InstanceMethods
           # jeffp: add valid?(group = nil), see definition below
           alias_method_chain :valid?, :validation_group
@@ -50,9 +50,11 @@ module ValidationGroup
           group_classes[klass] && group_classes[klass].include?(group)
         end
         if found
-          @current_validation_group = group
+          @current_validation_groups ||= []
+          @current_validation_groups << group
           # jeffp: capture current fields for performance optimization
-          @current_validation_fields = group_classes[found][group]
+          @current_validation_fields ||= []
+          @current_validation_fields |= group_classes[found][group]
         else
           raise ArgumentError, "No validation group of name :#{group}"
         end
@@ -72,7 +74,7 @@ module ValidationGroup
       end
 
       def validation_group_enabled?
-        respond_to?(:current_validation_group) && !current_validation_group.nil?
+        respond_to?(:current_validation_groups) && !current_validation_groups.blank?
       end
 			
       # eliminates need to use :enable_validation_group before :valid? call --
